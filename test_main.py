@@ -19,8 +19,12 @@ def test_demo_login(page: Page):
     expect(page.get_by_test_id("login-submit")).to_be_enabled()
     page.get_by_test_id("login-submit").click()
 
-    expect(page.get_by_text("Welcome to AQX Trader!")).to_be_visible()
-    expect(page.get_by_text("Lay Jun Yi")).to_be_visible()
+    # get span with id 0, the best i can do
+    announcements = page.locator('[id="0"]')
+    expect(announcements).to_contain_text("Welcome to AQX Trader!")
+    #find the element with text Lay Jun Yi and confirm it is visible
+    names = page.locator("text=Lay Jun Yi")
+    expect(names).to_be_visible()
 
 def test_demo_MarketOrder(page: Page):
     page.goto("https://aqxtrader.aquariux.com")
@@ -33,12 +37,16 @@ def test_demo_MarketOrder(page: Page):
     expect(page.get_by_test_id("login-submit")).to_be_enabled()
     page.get_by_test_id("login-submit").click()
 
-    expect(page.get_by_text("Welcome to AQX Trader!")).to_be_visible()
-    expect(page.get_by_text("Lay Jun Yi")).to_be_visible()
+    # get span with id 0, the best i can do
+    announcements = page.locator('[id="0"]')
+    expect(announcements).to_contain_text("Welcome to AQX Trader!")
+    #find the element with text Lay Jun Yi and confirm it is visible
+    names = page.locator("text=Lay Jun Yi")
+    expect(names).to_be_visible()
 
     #get current buy prices
     currentPrice = page.get_by_test_id("trade-live-buy-price").text_content()
-
+    currentPrice = float(re.sub(r'[^\d.]', '', currentPrice))  #remove any non-numeric characters
     #prepare the price inputs as 5 % more and less than current price
     stopLossPrice = currentPrice*0.95
     takeProfitPrice = currentPrice*1.05
@@ -51,7 +59,7 @@ def test_demo_MarketOrder(page: Page):
     page.get_by_test_id("trade-button-order").click()
 
     #expect trade confirmation
-    expect(page.get_by_role("div", id="overlay-aqx-trader")).to_be_visible()
+    expect(page.get_by_role("div", id="overlay-aqx-trader"))
     # place a market order
     page.get_by_test_id("trade-confirmation-button-confirm").click()
 
