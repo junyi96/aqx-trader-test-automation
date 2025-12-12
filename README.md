@@ -19,8 +19,8 @@ def test_demo_MarketOrder(page: Page):
 
 ### Comments
 One of the more tedious issues with creating this test script was accounting for the auto create in fields such as the stop loss and take profit points that happen automatically.   Multiple simulated clicks had to be performed to ensure that the dynamic filling happens as intended.
-##  Edit, partial close and close Open position
 
+##  Edit, partial close and close Open position
 Created the module
 `def test_demo_editOpenPosition`
 to test the Edit Open Position.
