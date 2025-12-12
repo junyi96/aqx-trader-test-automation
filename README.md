@@ -36,14 +36,14 @@ will test the Full close position using the max button
 Multiple modules have been created for each type of expiry matching each Limit Order.
 
 Below are the expected methods testing each order and type of Expiry
-1. Limit Order with "Good Til Canceled" Expiry [X]
-2. Limit Order with "Good Til Day" Expiry [X]
-3. Limit Order with "Good Til Specified Date" Expiry [X]
-4. Limit Order with "Good Til Specified Date and Time" Expiry [X]
-5. Stop Order with "Good Til Canceled" Expiry [ ]
-6. Stop Order with "Good Til Day" Expiry [ ]
-7. Stop Order with "Good Til Specified Date" Expiry [ ]
-8. Stop Order with "Good Til Specified Date and Time" Expiry [ ]
+1. [x] Limit Order with "Good Til Canceled" Expiry 
+2. [x] Limit Order with "Good Til Day" Expiry 
+3. [x] Limit Order with "Good Til Specified Date" Expiry 
+4. [x] Limit Order with "Good Til Specified Date and Time" Expiry 
+5. [ ] Stop Order with "Good Til Canceled" Expiry 
+6. [ ] Stop Order with "Good Til Day" Expiry 
+7. [ ] Stop Order with "Good Til Specified Date" Expiry 
+8. [ ] Stop Order with "Good Til Specified Date and Time" Expiry
 
 Note that the test script for specified date will have issues if the date is next month the program was using the aria-label to find the day to click.
 
