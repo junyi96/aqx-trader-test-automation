@@ -3,14 +3,14 @@
 This repository will be using the Playwright framework alongside Python to automate testing.
 
 ## Index
-- [place Market with Stop Loss and Take Profit](#place-Market-with-Stop-Loss-and-Take-Profit)  
+- [Place Market with Stop Loss and Take Profit](#place-Market-with-Stop-Loss-and-Take-Profit)  
 - [Edit, partial close and close Open position](#edit,-partial-close-and-close-Open-position)  
 - [Place Limit / Stop order with different types of Expiry](#place-Limit-/-Stop-order-with-different-types-of-Expiry)  
 - [Edit Pending Orders for all values included](#edit-Pending-Orders-for-all-values-included)
 - [Validate the order placed details with compare to notifications and position table details](#Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
 - [Validate Order History data](#Validate-Order-History-data)
 
-##  place Market with Stop Loss and Take Profit
+##  Place Market with Stop Loss and Take Profit
 
 It has been completed with 
 ```
@@ -36,21 +36,25 @@ will test the Full close position using the max button
 Multiple modules have been created for each type of expiry matching each Limit Order.
 
 Below are the expected methods testing each order and type of Expiry
-1. [x] Limit Order with "Good Til Canceled" Expiry 
-2. [x] Limit Order with "Good Til Day" Expiry 
-3. [x] Limit Order with "Good Til Specified Date" Expiry 
-4. [x] Limit Order with "Good Til Specified Date and Time" Expiry 
-5. [ ] Stop Order with "Good Til Canceled" Expiry 
-6. [ ] Stop Order with "Good Til Day" Expiry 
-7. [ ] Stop Order with "Good Til Specified Date" Expiry 
-8. [ ] Stop Order with "Good Til Specified Date and Time" Expiry
+1. [x] Limit Order with "Good Til Canceled" Expiry : `test_demo_createLimitGoodTillCanceled`
+2. [x] Limit Order with "Good Til Day" Expiry : `test_demo_createLimitGoodTillDay`
+3. [x] Limit Order with "Good Til Specified Date" Expiry : `test_demo_createLimitGoodTillDate`
+4. [x] Limit Order with "Good Til Specified Date and Time" Expiry : `test_demo_createLimitGoodTillDateAndTime`
+5. [x] Stop Order with "Good Til Canceled" Expiry : `test_demo_createStopGoodTillCanceled`
+6. [x] Stop Order with "Good Til Day" Expiry : `test_demo_createStopGoodTillDay`
+7. [x] Stop Order with "Good Til Specified Date" Expiry : `test_demo_createStopGoodTillDate`
+8. [x] Stop Order with "Good Til Specified Date and Time" Expiry : `test_demo_createStopGoodTillDateAndTime`
 
 Note that the test script for specified date will have issues if the date is next month the program was using the aria-label to find the day to click.
 
-TODO: Find a way to check if the specific created order was in the pending orders table as mentioned in the [final requirements](#Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
+TODO: 
+1. Find a way to ensure that the test script for specified date can handle if the new date is on a different month.
+2. Find a way to check if the specific created order was in the pending orders table as mentioned in the [final requirements](#Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
 
-## edit Pending Orders for all values included 
+## Edit Pending Orders for all values included 
 
 ## Validate the order placed details with compare to notifications and position table details
+
+All the Orders placed are validated compared to notifications by default.
 
 ## Validate Order History data 
