@@ -7,7 +7,14 @@ def browser_context(playwright):
     """Session-scoped browser context that persists across tests"""
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
+
+    # Start tracing
+    context.tracing.start(screenshots=True, snapshots=True, sources=True)
+
     yield context
+
+    # Stop tracing and save
+    context.tracing.stop(path="trace.zip")
     context.close()
     browser.close()
 
@@ -82,6 +89,69 @@ def test_demo_MarketOrder(authenticated_page: Page):
 
     expect(authenticated_page.get_by_text("Position has been created")).to_be_visible()
 
+def test_demo_editOpenPosition(authenticated_page: Page):
+    #click on Assets tab to see all orders
+    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+
+    #make sure both pending and open orders are present
+    expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
+
+    #retrieve the latest open position
+    latestRow = authenticated_page.get_by_test_id("asset-open-list-item").last
+    latestRow.get_by_test_id("asset-open-button-edit").click()
+
+    #expect trade confirmation dialog to appear - wait longer and check for the confirm button
+    expect(authenticated_page.get_by_text("Edit Position")).to_be_visible(timeout=10000)
+    expect(authenticated_page.get_by_test_id("edit-button-order")).to_be_visible(timeout=10000)
+    
+    # retrieve the stopLoss and takeProfit values
+    currentStoplossPrice = authenticated_page.get_by_test_id("trade-input-stoploss-price").input_value()
+    currentTakeprofitPrice = authenticated_page.get_by_test_id("trade-input-takeprofit-price").input_value()
+    #for Debug purposes
+    print(f"Current Stoploss Price: {currentStoplossPrice}  Current Takeprofit Price: {currentTakeprofitPrice}")
+
+    #modify the stoploss and takeprofit prices by 3 % each
+    newStoplossPrice = round(float(currentStoplossPrice)*0.97, 5)
+    newTakeprofitPrice = round(float(currentTakeprofitPrice)*1.03, 5)
+    print(f"New Stoploss Price: {newStoplossPrice}  New Takeprofit Price: {newTakeprofitPrice}")
+    authenticated_page.get_by_test_id("trade-input-stoploss-price").fill(str(newStoplossPrice))
+    authenticated_page.get_by_test_id("trade-input-takeprofit-price").fill(str(newTakeprofitPrice))
+    #click on separate field to activate auto-update
+    authenticated_page.get_by_test_id("trade-input-takeprofit-points").click()
+    # click on update position button
+    authenticated_page.get_by_test_id("edit-button-order").click()
+
+    #expect order confirmation dialog to appear
+    expect(authenticated_page.get_by_text("Order Confirmation")).to_be_visible(timeout=10000)
+    expect(authenticated_page.get_by_test_id("trade-confirmation-button-confirm")).to_be_visible(timeout=10000)
+
+    #Verify correct order type
+    expect(authenticated_page.get_by_test_id("trade-confirmation-order-type")).to_have_text("BUY")
+    # verify the stopLoss and takeprofit price changes
+    # Target the parent div that contains both label and value, then get the value sibling
+    # basically 1 parent -> 1st div(label):text with stop loss, 2nd div(value):text
+    stop_loss_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Stop Loss") + [data-testid="trade-confirmation-value"]')
+    take_profit_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Take Profit") + [data-testid="trade-confirmation-value"]')
+
+    # Wait for elements to be visible
+    expect(stop_loss_value).to_be_visible()
+    expect(take_profit_value).to_be_visible()
+
+    tradeStopLossPrice = stop_loss_value.text_content()
+    tradeTakeProfitPrice = take_profit_value.text_content()
+
+    print(f"Trade Stop Loss: {tradeStopLossPrice}, Trade Take Profit: {tradeTakeProfitPrice}")
+    if float(tradeStopLossPrice) != newStoplossPrice:
+        raise AssertionError(f"Stop Loss price mismatch: expected {newStoplossPrice}, got {tradeStopLossPrice}")
+    if float(tradeTakeProfitPrice) != newTakeprofitPrice:
+        raise AssertionError(f"Take Profit price mismatch: expected {newTakeprofitPrice}, got {tradeTakeProfitPrice}")
+    
+    #click confirm button
+    authenticated_page.get_by_test_id("trade-confirmation-button-confirm").click()
+
+    #expect toast notification
+    expect(authenticated_page.get_by_text("Position has been updated.")).to_be_visible()
+
 def test_demo_editPendingOrder(authenticated_page: Page):
     #get current buy prices - wait for element to have actual price content
     price_element = authenticated_page.get_by_test_id("trade-live-buy-price")
@@ -118,6 +188,9 @@ def test_demo_editPendingOrder(authenticated_page: Page):
 
     # Verify confirmation dialog shows the correct order type
     expect(authenticated_page.get_by_test_id("trade-confirmation-order-type")).to_have_text("BUY LIMIT")
+
+    #confirm toast notification
+    expect(authenticated_page.get_by_text("Order has been created.")).to_be_vis
 
     #click on Assets tab to see all orders
     authenticated_page.get_by_test_id("side-bar-option-assets").click()
