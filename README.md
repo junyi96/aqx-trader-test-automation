@@ -10,6 +10,7 @@ This repository will be using the Playwright framework alongside Python to autom
 - [Edit Pending Orders for all values included](#edit-Pending-Orders-for-all-values-included)
 - [Validate the order placed details with compare to notifications and position table details](#Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
 - [Validate Order History data](#Validate-Order-History-data)
+- [Room for Improvement](#room-for-improvement)
 
 ## Pre-Requisite
 
@@ -79,3 +80,10 @@ All the Orders placed are validated compared to notifications by default as seen
 ## Validate Order History data 
 
 The validate Order History Data is currently used in `test_demo_validateOrderHistory` test case.
+
+## Room for Improvement
+
+1. All the test cases are currently in 1 test file in `test_main.py` which is too cumbersome.
+Refactoring will need to be done to separate the test cases into seprate files based on function such as the Order Creation and Order Edit.
+2. The test trace is 1 per whole test script which makes debugging exponentially harder. 
+The test script has to be modified to generate test trace per test case for better debugging.
