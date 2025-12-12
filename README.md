@@ -21,6 +21,16 @@ def test_demo_MarketOrder(page: Page):
 One of the more tedious issues with creating this test script was accounting for the auto create in fields such as the stop loss and take profit points that happen automatically.   Multiple simulated clicks had to be performed to ensure that the dynamic filling happens as intended.
 ##  Edit, partial close and close Open position
 
+Created the module
+`def test_demo_editOpenPosition`
+to test the Edit Open Position.
+
+`def test_demo_partialCloseOpenPosition`
+will test the partial close position by closing half of volume out of the standard 0.1 used in the place market in the previous test script.
+
+`def test_demo_fullCloseOpenPosition`
+will test the Full close position using the max button
+
 ##  place Limit / Stop order with different types of Expiry
 
 ## edit Pending Orders for all values included 

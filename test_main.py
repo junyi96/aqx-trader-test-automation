@@ -67,7 +67,7 @@ def test_demo_MarketOrder(authenticated_page: Page):
     volume_input = authenticated_page.get_by_test_id("trade-input-volume")
     volume_input.click()
     volume_input.clear()
-    volume_input.fill("0.01")
+    volume_input.fill("0.1")
 
     # add voume by 30 as min
     #page.get_by_test_id("trade-input-stoploss-points").fill("30")
@@ -151,6 +151,92 @@ def test_demo_editOpenPosition(authenticated_page: Page):
 
     #expect toast notification
     expect(authenticated_page.get_by_text("Position has been updated.")).to_be_visible()
+
+def test_demo_partialCloseOpenPosition(authenticated_page: Page):
+    #click on Assets tab to see all orders
+    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+
+    #make sure both pending and open orders are present
+    expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
+
+    #retrieve the latest open position
+    latestRow = authenticated_page.get_by_test_id("asset-open-list-item").last
+    # click on the close button
+    latestRow.get_by_test_id("asset-open-button-close").click()
+
+    #expect Close confirmation dialog to appear - wait longer and check for the confirm button
+    expect(authenticated_page.get_by_text("Confirm To Close Position")).to_be_visible(timeout=10000)
+    expect(authenticated_page.get_by_role("button").get_by_text("Confirm")).to_be_visible(timeout=10000)
+
+    #retrieve order number to confirm if full close later
+    orderNumberList = authenticated_page.locator('div:has(div:text("Order No.")) + div').all()
+    #To Debug
+    for i, val in enumerate(orderNumberList):
+        print(f"Order Number Element Text[{i}]: '{val.text_content()}'")
+    orderNumber = orderNumberList[0].text_content()
+    #retrieve current volume
+    currentVolume = authenticated_page.get_by_placeholder("Min: 0.01").input_value()
+    print(f"Current Volume: {currentVolume}")
+    #calculate half volume
+    halfVolume = round(float(currentVolume)/2, 5)
+    print(f"Half Volume: {halfVolume}")
+    # fill in half volume
+    volume_input = authenticated_page.get_by_placeholder("Min: 0.01").fill(str(halfVolume))
+    # click on confirm Close position button
+    authenticated_page.get_by_role("button").get_by_text("Confirm").click()
+    #expect toast notification
+    expect(authenticated_page.get_by_text("Position has been closed.")).to_be_visible()
+
+    #verfiy that the order number is still in the open positions list
+    open_positions = authenticated_page.get_by_test_id("asset-open-list-item").all()
+    for pos in open_positions:
+        pos_text = pos.get_by_test_id("asset-open-column-order-id").text_content()
+        if orderNumber in pos_text:
+            print(f"Order Number {orderNumber} still found in open positions after partial close, as expected.")
+            pos.get_by_test_id("asset-open-button-close").click()
+            #check the remaing volume is equal to halfVolume
+            remainingVolume = authenticated_page.get_by_placeholder("Min: 0.01").input_value()
+            if float(remainingVolume) != halfVolume:
+                raise AssertionError(f"Remaining volume mismatch: expected {halfVolume}, got {remainingVolume}")
+            return
+        else:
+            raise AssertionError(f"Order Number {orderNumber} not found in open positions after partial close.")
+        
+def test_demo_fullCloseOpenPosition(authenticated_page: Page):
+    #click on Assets tab to see all orders
+    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+
+    #make sure both pending and open orders are present
+    expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
+
+    #retrieve the latest open position
+    latestRow = authenticated_page.get_by_test_id("asset-open-list-item").last
+    # click on the close button
+    latestRow.get_by_test_id("asset-open-button-close").click()
+
+    #expect Close confirmation dialog to appear - wait longer and check for the confirm button
+    expect(authenticated_page.get_by_text("Confirm To Close Position")).to_be_visible(timeout=10000)
+    expect(authenticated_page.get_by_role("button").get_by_text("Confirm")).to_be_visible(timeout=10000)
+
+    #retrieve order number to confirm if full close later
+    orderNumberList = authenticated_page.locator('div:has(div:text("Order No.")) + div').all()
+    #To Debug
+    for i, val in enumerate(orderNumberList):
+        print(f"Order Number Element Text[{i}]: '{val.text_content()}'")
+    orderNumber = orderNumberList[0].text_content()
+
+    #max button to get full volume
+    authenticated_page.get_by_test_id("close-order-input-volume-static-max").click()
+    # click on confirm Close position button
+    authenticated_page.get_by_role("button").get_by_text("Confirm").click()
+    #expect toast notification
+    expect(authenticated_page.get_by_text("Position has been closed.")).to_be_visible()
+    #verfiy that the order number is no longer in the open positions list
+    open_positions = authenticated_page.get_by_test_id("asset-open-list-item").all()
+    for pos in open_positions:
+        pos_text = pos.get_by_test_id("asset-open-column-order-id").text_content()
+        if orderNumber in pos_text:
+            raise AssertionError(f"Order Number {orderNumber} still found in open positions after closing.")
 
 def test_demo_editPendingOrder(authenticated_page: Page):
     #get current buy prices - wait for element to have actual price content
