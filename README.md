@@ -53,8 +53,12 @@ TODO:
 
 ## Edit Pending Orders for all values included 
 
+The edit test script is in `test_demo_editPendingOrder`.
+
 ## Validate the order placed details with compare to notifications and position table details
 
 All the Orders placed are validated compared to notifications by default.
 
 ## Validate Order History data 
+
+This one is more tricky as it would currently involve refactoring the previous tests to store data on the orders created and edit in the previous test scripts.

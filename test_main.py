@@ -55,9 +55,9 @@ def test_demo_MarketOrder(authenticated_page: Page):
     print(f"Raw price text: '{currentPrice}'")
 
     currentPrice = float(re.sub(r'[^\d.]', '', currentPrice))  #remove any non-numeric characters
-    #prepare the price inputs as 1 % more and less than current price
-    stopLossPrice = currentPrice*0.99
-    takeProfitPrice = currentPrice*1.01
+    #prepare the price inputs as 5 % more and less than current price
+    stopLossPrice = currentPrice*0.95
+    takeProfitPrice = currentPrice*1.05
     authenticated_page.get_by_test_id("trade-input-stoploss-price").fill(str(stopLossPrice))
     authenticated_page.get_by_test_id("trade-input-takeprofit-price").fill(str(takeProfitPrice))
 
@@ -863,3 +863,162 @@ def test_demo_editPendingOrder(authenticated_page: Page):
     #make sure both pending and open orders are present
     expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
     expect(authenticated_page.get_by_test_id("tab-asset-order-type-pending-orders")).to_be_visible()
+
+    #click on Pending orders tab
+    authenticated_page.get_by_test_id("tab-asset-order-type-pending-orders").click()
+    
+    #retrieve the latest pending position
+    latestRow = authenticated_page.get_by_test_id("asset-pending-list-item").last
+    latestRow.get_by_test_id("asset-open-button-edit").click()
+
+    #expect trade confirmation dialog to appear - wait longer and check for the confirm button
+    expect(authenticated_page.get_by_text("Edit Order")).to_be_visible(timeout=10000)
+    expect(authenticated_page.wait).to_be_visible(timeout=10000)
+    
+    # retrieve the orderPrice
+    orderPrice = authenticated_page.locator('input[name="price"]').input_value()
+    #for Debug purposes
+    print(f"Current Order Price: {orderPrice}")
+
+    # check if the order being edited is STOP or LIMIT
+    overlay = authenticated_page.locator('div[id="overlay-aqx-trader"]')
+    
+    #modify the orderPrice prices by 1 % up or down based on type of order
+    if overlay.locator('div:has-text("BUY LIMIT")').is_visible():
+        # LIMIT order - reduce price by 1 % as limit order buys when stock price below stated price
+        newOrderPrice = round(float(orderPrice)*0.99, 5)
+    elif overlay.locator('div:has-text("BUY STOP")').is_visible():
+        # STOP order - increase price by 1 % as stop order buys when stock price above stated price
+        newOrderPrice = round(float(orderPrice)*1.01, 5)
+    
+    print(f"New Order Price: {newOrderPrice}")
+    #prepare the price inputs as 5 % more and less than current price
+    stopLossPrice = newOrderPrice*0.95
+    takeProfitPrice = newOrderPrice*1.05
+
+    # new stoploss and takeprofit prices for verification later
+    authenticated_page.get_by_test_id("trade-input-stoploss-price").fill(str(stopLossPrice))
+    authenticated_page.get_by_test_id("trade-input-takeprofit-price").fill(str(takeProfitPrice))
+    authenticated_page.locator('input[name="price"]').fill(str(newOrderPrice))
+
+    #new Expiry Change
+    expiryType = authenticated_page.get_by_test_id("trade-dropdown-expiry")
+    if expiryType.get_by_text("Good Till Canceled").is_visible():
+        #change to Good Till Day
+        expiryType.click()
+        overlay.get_by_text("Good Till Day", exact=True).click()
+    elif expiryType.get_by_text("Good Till Day").is_visible():
+        #change to Specified Date
+        expiryType.click()
+        overlay.get_by_text("Specified Date", exact=True).click()
+        # Calculate target date (7 days from now)
+        future_date = datetime.now() + timedelta(days=7)
+        print(f"Setting expiry date to: {future_date.strftime('%Y-%m-%d')}")
+
+        # Click to open the react-calendar date picker
+        authenticated_page.get_by_test_id("trade-input-expiry-date").click()
+
+        # Wait for the calendar to appear
+        authenticated_page.wait_for_selector('.react-calendar', timeout=5000)
+
+        # Click the specific day using aria-label (format: "Month Day, Year")
+        # Example: "December 19, 2025"
+        target_aria_label = future_date.strftime("%B %d, %Y")  # "December 19, 2025"
+        print(f"Looking for calendar day with aria-label: {target_aria_label}")
+
+        # Find and click the button containing the abbr with the matching aria-label
+        # Clicking the abbr element will trigger the parent button
+        day_button = authenticated_page.locator(f'.react-calendar abbr[aria-label="{target_aria_label}"]')
+        day_button.click()
+    elif expiryType.get_by_text("Specified Date").is_visible():
+        #change to Specified Date and Time
+        expiryType.click()
+        overlay.get_by_text("Specified Date and Time", exact=True).click()
+        # Calculate target date (7 days from now)
+        future_date = datetime.now() + timedelta(days=7)
+        print(f"Setting expiry date & time to: {future_date.strftime('%Y-%m-%d %H:%M')}")
+
+        # Click to open the react-calendar date picker
+        authenticated_page.get_by_test_id("trade-input-expiry-date").click()
+
+        # Wait for the calendar to appear
+        authenticated_page.wait_for_selector('.react-calendar', timeout=5000)
+
+        # Click the specific day using aria-label (format: "Month Day, Year")
+        # Example: "December 19, 2025"
+        target_aria_label = future_date.strftime("%B %d, %Y")  # "December 19, 2025"
+        print(f"Looking for calendar day with aria-label: {target_aria_label}")
+
+        # Find and click the button containing the abbr with the matching aria-label
+        # Clicking the abbr element will trigger the parent button
+        day_button = authenticated_page.locator(f'.react-calendar abbr[aria-label="{target_aria_label}"]')
+        day_button.click()
+
+        # Set the time picker
+        target_hour = future_date.strftime("%H")  # 24-hour format with leading zero, e.g., "14"
+        target_minute = future_date.strftime("%M")  # Minutes with leading zero, e.g., "05"
+
+        print(f"Setting time to: {target_hour}:{target_minute}")
+
+        # Click to open the time picker
+        authenticated_page.get_by_test_id("trade-input-expiry-time").click()
+        authenticated_page.wait_for_timeout(500)  # Wait for picker to render
+
+        # Set Hour - click the Hour dropdown
+        hour_dropdown = authenticated_page.locator('div:has-text("Hour") + div').first
+        hour_dropdown.click()
+
+        # Wait for the dropdown options to appear
+        authenticated_page.wait_for_selector('[data-testid="options"]', timeout=5000)
+
+        # Click the target hour from the dropdown
+        authenticated_page.locator(f'[data-testid="options"] div:has-text("{target_hour}")').first.click()
+
+        # Set Minute - click the Minute dropdown
+        minute_dropdown = authenticated_page.locator('div:has-text("Minute") + div').first
+        minute_dropdown.click()
+    elif expiryType.get_by_text("Specified Date and Time").is_visible():
+        #change to Good Till Canceled
+        expiryType.click()
+        overlay.get_by_text("Good Till Canceled", exact=True).click()
+    else:
+        print("Expiry type not recognized, no changes made.")
+        raise AssertionError("Expiry type not recognized, no changes made.")
+
+    #click on separate field to activate auto-update
+    authenticated_page.get_by_test_id("trade-input-takeprofit-points").click()
+
+
+    # click on update position button
+    authenticated_page.get_by_test_id("edit-button-order").click()
+
+    #expect order confirmation dialog to appear
+    expect(authenticated_page.get_by_text("Order Confirmation")).to_be_visible(timeout=10000)
+    expect(authenticated_page.get_by_test_id("trade-confirmation-button-confirm")).to_be_visible(timeout=10000)
+
+    #Verify correct order type
+    expect(authenticated_page.get_by_test_id("trade-confirmation-order-type")).to_have_text("BUY")
+    # verify the stopLoss and takeprofit price changes
+    # Target the parent div that contains both label and value, then get the value sibling
+    # basically 1 parent -> 1st div(label):text with stop loss, 2nd div(value):text
+    stop_loss_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Stop Loss") + [data-testid="trade-confirmation-value"]')
+    take_profit_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Take Profit") + [data-testid="trade-confirmation-value"]')
+
+    # Wait for elements to be visible
+    expect(stop_loss_value).to_be_visible()
+    expect(take_profit_value).to_be_visible()
+
+    tradeStopLossPrice = stop_loss_value.text_content()
+    tradeTakeProfitPrice = take_profit_value.text_content()
+
+    print(f"Trade Stop Loss: {tradeStopLossPrice}, Trade Take Profit: {tradeTakeProfitPrice}")
+    if float(tradeStopLossPrice) != newStoplossPrice:
+        raise AssertionError(f"Stop Loss price mismatch: expected {newStoplossPrice}, got {tradeStopLossPrice}")
+    if float(tradeTakeProfitPrice) != newTakeprofitPrice:
+        raise AssertionError(f"Take Profit price mismatch: expected {newTakeprofitPrice}, got {tradeTakeProfitPrice}")
+    
+    #click confirm button
+    authenticated_page.get_by_test_id("trade-confirmation-button-confirm").click()
+
+    #expect toast notification
+    expect(authenticated_page.get_by_text("Position has been updated.")).to_be_visible()
