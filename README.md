@@ -3,12 +3,12 @@
 This repository will be using the Playwright framework alongside Python to automate testing.
 
 ## Index
-[place Market with Stop Loss and Take Profit](place-Market-with-Stop-Loss-and-Take-Profit)  
-[Edit, partial close and close Open position](edit,-partial-close-and-close-Open-position)  
-[Place Limit / Stop order with different types of Expiry](place-Limit-/-Stop-order-with-different-types-of-Expiry)  
-[Edit Pending Orders for all values included](edit-Pending-Orders-for-all-values-included)
-[Validate the order placed details with compare to notifications and position table details](Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
-[Validate Order History data](Validate-Order-History-data)
+- [place Market with Stop Loss and Take Profit](#place-Market-with-Stop-Loss-and-Take-Profit)  
+- [Edit, partial close and close Open position](#edit,-partial-close-and-close-Open-position)  
+- [Place Limit / Stop order with different types of Expiry](#place-Limit-/-Stop-order-with-different-types-of-Expiry)  
+- [Edit Pending Orders for all values included](#edit-Pending-Orders-for-all-values-included)
+- [Validate the order placed details with compare to notifications and position table details](#Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
+- [Validate Order History data](#Validate-Order-History-data)
 
 ##  place Market with Stop Loss and Take Profit
 
@@ -32,6 +32,10 @@ will test the partial close position by closing half of volume out of the standa
 will test the Full close position using the max button
 
 ##  place Limit / Stop order with different types of Expiry
+
+Multiple modules have been created for each type of expiry matching each Limit Order.
+
+TODO: Find a way to check if the specific created order was in the pending orders table as mentioned in the [final requirements](#Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
 
 ## edit Pending Orders for all values included 
 
