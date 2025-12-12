@@ -3,12 +3,29 @@
 This repository will be using the Playwright framework alongside Python to automate testing.
 
 ## Index
+- [Pre-Requisite](#pre-requisite)
 - [Place Market with Stop Loss and Take Profit](#place-Market-with-Stop-Loss-and-Take-Profit)  
 - [Edit, partial close and close Open position](#edit,-partial-close-and-close-Open-position)  
 - [Place Limit / Stop order with different types of Expiry](#place-Limit-/-Stop-order-with-different-types-of-Expiry)  
 - [Edit Pending Orders for all values included](#edit-Pending-Orders-for-all-values-included)
 - [Validate the order placed details with compare to notifications and position table details](#Validate-the-order-placed-details-with-compare-to-notifications-and-position-table-details)
 - [Validate Order History data](#Validate-Order-History-data)
+
+## Pre-Requisite
+
+1. Install the python
+2. Install the python Pytest plugin
+```
+pip install pytest-playwright
+```
+3. Install the required browsers
+```
+playwright install
+```
+4. Now run the pytest command in the folder via CMD or Bash
+```
+pytest
+```
 
 ##  Place Market with Stop Loss and Take Profit
 
@@ -57,8 +74,8 @@ The edit test script is in `test_demo_editPendingOrder`.
 
 ## Validate the order placed details with compare to notifications and position table details
 
-All the Orders placed are validated compared to notifications by default.
+All the Orders placed are validated compared to notifications by default as seen in the expect() statment in the MarketOrder test Case and Stop/Limit Test Case.
 
 ## Validate Order History data 
 
-This one is more tricky as it would currently involve refactoring the previous tests to store data on the orders created and edit in the previous test scripts.
+The validate Order History Data is currently used in `test_demo_validateOrderHistory` test case.

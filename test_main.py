@@ -43,6 +43,20 @@ def authenticated_page(browser_context):
     yield page
     page.close()
 
+@pytest.fixture(autouse=True)
+def log_test_boundary(request):
+    """Automatically log test start/end for better trace readability"""
+    test_name = request.node.name
+    print("\n" + "="*80)
+    print(f"STARTING TEST: {test_name}")
+    print("="*80 + "\n")
+    
+    yield
+    
+    print("\n" + "="*80)
+    print(f"FINISHED TEST: {test_name}")
+    print("="*80 + "\n")
+
 def test_demo_MarketOrder(authenticated_page: Page):
     #get current buy prices - wait for element to have actual price content
     price_element = authenticated_page.get_by_test_id("trade-live-buy-price")
@@ -91,8 +105,10 @@ def test_demo_MarketOrder(authenticated_page: Page):
     expect(authenticated_page.get_by_text("Position has been created")).to_be_visible()
 
 def test_demo_editOpenPosition(authenticated_page: Page):
+    # go to assets tab page
+    authenticated_page.goto("https://aqxtrader.aquariux.com/web/assets")
     #click on Assets tab to see all orders
-    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+    #authenticated_page.get_by_test_id("side-bar-option-assets").click()
 
     #make sure both pending and open orders are present
     expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
@@ -111,12 +127,21 @@ def test_demo_editOpenPosition(authenticated_page: Page):
     #for Debug purposes
     print(f"Current Stoploss Price: {currentStoplossPrice}  Current Takeprofit Price: {currentTakeprofitPrice}")
 
-    #modify the stoploss and takeprofit prices by 1 % each
-    newStoplossPrice = round(float(currentStoplossPrice)*0.99, 5)
-    newTakeprofitPrice = round(float(currentTakeprofitPrice)*1.01, 5)
+    #modify the stoploss and takeprofit prices by 5 % each
+    newStoplossPrice = round(float(currentStoplossPrice)*0.95, 5)
+    newTakeprofitPrice = round(float(currentTakeprofitPrice)*1.05, 5)
     print(f"New Stoploss Price: {newStoplossPrice}  New Takeprofit Price: {newTakeprofitPrice}")
     authenticated_page.get_by_test_id("trade-input-stoploss-price").fill(str(newStoplossPrice))
+    authenticated_page.get_by_test_id("trade-input-stoploss-points").click()  #click on separate field to activate auto-update
+    expect(authenticated_page.get_by_test_id("trade-input-stoploss-price")).to_have_value(str(newStoplossPrice))
     authenticated_page.get_by_test_id("trade-input-takeprofit-price").fill(str(newTakeprofitPrice))
+    authenticated_page.get_by_test_id("trade-input-stoploss-points").click()  #click on separate field to activate auto-update
+    expect(authenticated_page.get_by_test_id("trade-input-takeprofit-price")).to_have_value(str(newTakeprofitPrice))
+
+    authenticated_page.get_by_test_id("trade-input-stoploss-points").click()
+    authenticated_page.get_by_test_id("trade-input-takeprofit-points").click()
+    expect(authenticated_page.get_by_test_id("trade-input-stoploss-points")).not_to_be_empty(timeout=5000)
+    expect(authenticated_page.get_by_test_id("trade-input-takeprofit-points")).not_to_be_empty(timeout=5000)
     #click on separate field to activate auto-update
     authenticated_page.get_by_test_id("trade-input-takeprofit-points").click()
     # click on update position button
@@ -131,8 +156,8 @@ def test_demo_editOpenPosition(authenticated_page: Page):
     # verify the stopLoss and takeprofit price changes
     # Target the parent div that contains both label and value, then get the value sibling
     # basically 1 parent -> 1st div(label):text with stop loss, 2nd div(value):text
-    stop_loss_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Stop Loss") + [data-testid="trade-confirmation-value"]')
-    take_profit_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Take Profit") + [data-testid="trade-confirmation-value"]')
+    stop_loss_value = authenticated_page.locator('div[data-testid="trade-confirmation-label"]:has-text("Stop Loss") + div[data-testid="trade-confirmation-value"]')
+    take_profit_value = authenticated_page.locator('div[data-testid="trade-confirmation-label"]:has-text("Take Profit") + div[data-testid="trade-confirmation-value"]')
 
     # Wait for elements to be visible
     expect(stop_loss_value).to_be_visible()
@@ -154,8 +179,10 @@ def test_demo_editOpenPosition(authenticated_page: Page):
     expect(authenticated_page.get_by_text("Position has been updated.")).to_be_visible()
 
 def test_demo_partialCloseOpenPosition(authenticated_page: Page):
+    # go to assets tab page
+    authenticated_page.goto("https://aqxtrader.aquariux.com/web/assets")
     #click on Assets tab to see all orders
-    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+    #authenticated_page.get_by_test_id("side-bar-option-assets").click()
 
     #make sure both pending and open orders are present
     expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
@@ -170,11 +197,11 @@ def test_demo_partialCloseOpenPosition(authenticated_page: Page):
     expect(authenticated_page.get_by_role("button").get_by_text("Confirm")).to_be_visible(timeout=10000)
 
     #retrieve order number to confirm if full close later
-    orderNumberList = authenticated_page.locator('div:has(div:text("Order No.")) + div').all()
+    overlay = authenticated_page.locator('div[id="overlay-aqx-trader"]')
+    orderNumberList = overlay.locator('div:has-text("Order No.") + div').first
     #To Debug
-    for i, val in enumerate(orderNumberList):
-        print(f"Order Number Element Text[{i}]: '{val.text_content()}'")
-    orderNumber = orderNumberList[0].text_content()
+    orderNumber = orderNumberList.text_content()
+    print(f"Order Number Element Text : '{orderNumber}'")
     #retrieve current volume
     currentVolume = authenticated_page.get_by_placeholder("Min: 0.01").input_value()
     print(f"Current Volume: {currentVolume}")
@@ -188,24 +215,32 @@ def test_demo_partialCloseOpenPosition(authenticated_page: Page):
     #expect toast notification
     expect(authenticated_page.get_by_text("Position has been closed.")).to_be_visible()
 
+    #wait for the open positions list to refresh
+    authenticated_page.wait_for_timeout(4000)
     #verfiy that the order number is still in the open positions list
     open_positions = authenticated_page.get_by_test_id("asset-open-list-item").all()
+    found = False
     for pos in open_positions:
         pos_text = pos.get_by_test_id("asset-open-column-order-id").text_content()
+        print(f"Checking open position Order ID: '{pos_text}' against '{orderNumber}'")
         if orderNumber in pos_text:
             print(f"Order Number {orderNumber} still found in open positions after partial close, as expected.")
             pos.get_by_test_id("asset-open-button-close").click()
             #check the remaing volume is equal to halfVolume
             remainingVolume = authenticated_page.get_by_placeholder("Min: 0.01").input_value()
+            found = True
             if float(remainingVolume) != halfVolume:
                 raise AssertionError(f"Remaining volume mismatch: expected {halfVolume}, got {remainingVolume}")
-            return
-        else:
-            raise AssertionError(f"Order Number {orderNumber} not found in open positions after partial close.")
-        
+            break
+    if not found:
+        raise AssertionError(f"Order Number {orderNumber} not found in open positions after partial close.")
+    
+            
 def test_demo_fullCloseOpenPosition(authenticated_page: Page):
+    # go to assets tab page
+    authenticated_page.goto("https://aqxtrader.aquariux.com/web/assets")
     #click on Assets tab to see all orders
-    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+    # authenticated_page.get_by_test_id("side-bar-option-assets").click()
 
     #make sure both pending and open orders are present
     expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
@@ -856,9 +891,10 @@ def test_demo_createStopGoodTillDateAndTime(authenticated_page: Page):
     expect(authenticated_page.get_by_text("Order has been created.")).to_be_visible(timeout=10000)
 
 def test_demo_editPendingOrder(authenticated_page: Page):
-    
+    #Go to Assets page
+    authenticated_page.goto("https://aqxtrader.aquariux.com/web/assets")
     #click on Assets tab to see all orders
-    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+    #authenticated_page.get_by_test_id("side-bar-option-assets").click()
 
     #make sure both pending and open orders are present
     expect(authenticated_page.get_by_test_id("tab-asset-order-type-open-positions")).to_be_visible()
@@ -871,6 +907,9 @@ def test_demo_editPendingOrder(authenticated_page: Page):
     latestRow = authenticated_page.get_by_test_id("asset-pending-list-item").last
     latestRow.get_by_test_id("asset-open-button-edit").click()
 
+    #locate the overlay dialog
+    overlay = authenticated_page.locator('div[id="overlay-aqx-trader"]').all()[0]
+
     #expect trade confirmation dialog to appear - wait longer and check for the confirm button
     expect(authenticated_page.get_by_text("Edit Order")).to_be_visible(timeout=10000)
     expect(overlay.locator('button:has-text("Confirm")')).to_be_visible(timeout=10000)
@@ -880,26 +919,35 @@ def test_demo_editPendingOrder(authenticated_page: Page):
     #for Debug purposes
     print(f"Current Order Price: {orderPrice}")
 
+    orderLimitTypeList = overlay.locator('div').filter(has_text=re.compile(r"^BUY LIMIT$")).all()
+    for element in orderLimitTypeList:
+        print(f"BUY LIMIT elements found: {element.text_content()}")
+    orderStopTypeList = overlay.locator('div').filter(has_text=re.compile(r"^BUY STOP$")).all()
+    for element in orderStopTypeList:
+        print(f"BUY STOP elements found: {element.text_content()}")
+
     # check if the order being edited is STOP or LIMIT
-    overlay = authenticated_page.locator('div[id="overlay-aqx-trader"]')
-    
     #modify the orderPrice prices by 1 % up or down based on type of order
-    if overlay.locator('div:has-text("BUY LIMIT")').is_visible():
-        # LIMIT order - reduce price by 1 % as limit order buys when stock price below stated price
-        newOrderPrice = round(float(orderPrice)*0.99, 5)
-    elif overlay.locator('div:has-text("BUY STOP")').is_visible():
+    if overlay.locator('div').filter(has_text=re.compile(r"^BUY LIMIT$")).all()[0].is_visible():
+        # LIMIT order - reduce price by 0.5 % as limit order buys when stock price below stated price
+        newOrderPrice = round(float(orderPrice)*0.995, 5)
+        orderType = "BUY LIMIT"
+    elif overlay.locator('div').filter(has_text=re.compile(r"^BUY STOP$")).all()[0].is_visible():
         # STOP order - increase price by 1 % as stop order buys when stock price above stated price
-        newOrderPrice = round(float(orderPrice)*1.01, 5)
+        newOrderPrice = round(float(orderPrice)*1.005, 5)
+        orderType = "BUY STOP"
     
     print(f"New Order Price: {newOrderPrice}")
     #prepare the price inputs as 5 % more and less than current price
-    stopLossPrice = newOrderPrice*0.95
-    takeProfitPrice = newOrderPrice*1.05
+    stopLossPrice = round(newOrderPrice*0.95, 5)
+    takeProfitPrice = round(newOrderPrice*1.05, 5)
 
     # new stoploss and takeprofit prices for verification later
+    #note that the price input has to be first before the other 2 prices
+    authenticated_page.locator('input[name="price"]').fill(str(newOrderPrice))
     authenticated_page.get_by_test_id("trade-input-stoploss-price").fill(str(stopLossPrice))
     authenticated_page.get_by_test_id("trade-input-takeprofit-price").fill(str(takeProfitPrice))
-    authenticated_page.locator('input[name="price"]').fill(str(newOrderPrice))
+    
 
     #prepare future datetime in case of expiry change
     future_date = datetime.now() + timedelta(days=7)
@@ -913,6 +961,7 @@ def test_demo_editPendingOrder(authenticated_page: Page):
         #change to Good Till Day
         expiryType.click()
         overlay.get_by_text("Good Till Day", exact=True).click()
+        expect(overlay.get_by_test_id("trade-dropdown-expiry")).to_have_text(newExpiryType)
     elif expiryType.get_by_text("Good Till Day").is_visible():
         oldExpiryType = "Good Till Day"
         newExpiryType = "Specified Date"
@@ -937,6 +986,7 @@ def test_demo_editPendingOrder(authenticated_page: Page):
         # Clicking the abbr element will trigger the parent button
         day_button = authenticated_page.locator(f'.react-calendar abbr[aria-label="{target_aria_label}"]')
         day_button.click()
+        expect(overlay.get_by_test_id("trade-dropdown-expiry")).to_have_text(newExpiryType)
     elif expiryType.get_by_text("Specified Date").is_visible():
         oldExpiryType = "Specified Date"
         newExpiryType = "Specified Date and Time"
@@ -985,34 +1035,45 @@ def test_demo_editPendingOrder(authenticated_page: Page):
         # Set Minute - click the Minute dropdown
         minute_dropdown = authenticated_page.locator('div:has-text("Minute") + div').first
         minute_dropdown.click()
+        expect(overlay.get_by_test_id("trade-dropdown-expiry")).to_have_text(newExpiryType)
     elif expiryType.get_by_text("Specified Date and Time").is_visible():
         oldExpiryType = "Specified Date and Time"
         newExpiryType = "Good Till Canceled"
         #change to Good Till Canceled
         expiryType.click()
         overlay.get_by_text("Good Till Canceled", exact=True).click()
+        expect(overlay.get_by_test_id("trade-dropdown-expiry")).to_have_text(newExpiryType)
     else:
         print("Expiry type not recognized, no changes made.")
         raise AssertionError("Expiry type not recognized, no changes made.")
 
+    #Debug
+    print(f"Old Expiry Type: {oldExpiryType}, New Expiry Type: {newExpiryType}")
     #click on separate field to activate auto-update
     authenticated_page.get_by_test_id("trade-input-takeprofit-points").click()
 
 
     # click on Confirm position button
-    overlay.get_by_role("button", text="Confirm", exact=True).click()
+    overlay.get_by_role("button").filter(has_text="Confirm").click()
 
     #expect order confirmation dialog to appear
     expect(overlay.get_by_text("Order Confirmation")).to_be_visible(timeout=10000)
     expect(overlay.get_by_test_id("trade-confirmation-button-confirm")).to_be_visible(timeout=10000)
 
     #Verify correct order type
-    expect(authenticated_page.get_by_test_id("trade-confirmation-order-type")).to_have_text(newExpiryType)
+    expect(authenticated_page.get_by_test_id("trade-confirmation-order-type")).to_have_text(orderType)
+    #verify expiry type change
+    #Debug
+    confirmationValuesList = authenticated_page.locator('div[data-testid="trade-confirmation-value"]').all()
+    # 0 is volume, 1 is units, 2 is price, 3 is stop loss, 4 is take profit, 5 is expiry, 6 is expirydate, 7 is Fill Policy
+    expiryConfirmationValue = confirmationValuesList[5]
+    print(f"Expiry Confirmation Value: {expiryConfirmationValue.text_content()}")
+    expect(expiryConfirmationValue).to_have_text(newExpiryType)
     # verify the stopLoss and takeprofit price changes
     # Target the parent div that contains both label and value, then get the value sibling
     # basically 1 parent -> 1st div(label):text with stop loss, 2nd div(value):text
-    stop_loss_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Stop Loss") + [data-testid="trade-confirmation-value"]')
-    take_profit_value = authenticated_page.locator('[data-testid="trade-confirmation-label"]:has-text("Take Profit") + [data-testid="trade-confirmation-value"]')
+    stop_loss_value = confirmationValuesList[3]
+    take_profit_value = confirmationValuesList[4]
 
     # Wait for elements to be visible
     expect(stop_loss_value).to_be_visible()
@@ -1032,3 +1093,82 @@ def test_demo_editPendingOrder(authenticated_page: Page):
 
     #expect toast notification
     expect(authenticated_page.get_by_text("Order has been updated.")).to_be_visible()
+
+def test_demo_validateOrderHistory(authenticated_page: Page):
+    # go to trade page
+    authenticated_page.goto("https://aqxtrader.aquariux.com/web/trade")
+    #get current buy prices - wait for element to have actual price content
+    price_element = authenticated_page.get_by_test_id("trade-live-buy-price")
+
+    # Wait for the price to actually contain numbers (not just be visible)
+    expect(price_element).to_have_text(re.compile(r'\d+'), timeout=10000)
+
+    currentPrice = price_element.text_content()
+    # Debug: print what we got
+    print(f"Raw price text: '{currentPrice}'")
+
+    currentPrice = float(re.sub(r'[^\d.]', '', currentPrice))  #remove any non-numeric characters
+    #prepare the price inputs as 5 % more and less than current price
+    stopLossPrice = currentPrice*0.95
+    takeProfitPrice = currentPrice*1.05
+    authenticated_page.get_by_test_id("trade-input-stoploss-price").fill(str(stopLossPrice))
+    authenticated_page.get_by_test_id("trade-input-takeprofit-price").fill(str(takeProfitPrice))
+
+    #need to click on 2 different fields for the take profit points and volume points to auto-fill
+    authenticated_page.get_by_test_id("trade-input-takeprofit-points").click()
+
+    # Clear and fill volume field
+    volume_input = authenticated_page.get_by_test_id("trade-input-volume")
+    volume_input.click()
+    volume_input.clear()
+    volume_input.fill("0.1")
+
+    # add voume by 30 as min
+    #page.get_by_test_id("trade-input-stoploss-points").fill("30")
+    #page.get_by_test_id("trade-input-takeprofit-points").fill("30")
+
+    #get server time for order time verification later
+    # retrieve server time e.g. Server Time : 2025-12-12 16:53:20
+    server_time_str = authenticated_page.locator("div").filter(has_text=re.compile(r"^Server Time : ")).first.text_content()
+    serverTime = server_time_str.replace("Server Time : ", "").strip()
+    #convert to datetime
+    serverTime_dt = datetime.strptime(serverTime, "%Y-%m-%d %H:%M:%S")
+
+    # Ensure the order button is enabled before clicking
+    order_button = authenticated_page.get_by_test_id("trade-button-order")
+    expect(order_button).to_be_enabled()
+    order_button.click()
+
+    #expect trade confirmation dialog to appear - wait longer and check for the confirm button
+    expect(authenticated_page.get_by_test_id("trade-confirmation-button-confirm")).to_be_visible(timeout=10000)
+
+    # Verify confirmation dialog shows the correct order type
+    expect(authenticated_page.get_by_test_id("trade-confirmation-order-type")).to_have_text("BUY")
+
+    print(f"Server Time: {serverTime_dt}")
+    # place a market order
+    authenticated_page.get_by_test_id("trade-confirmation-button-confirm").click()
+
+    expect(authenticated_page.get_by_text("Position has been created")).to_be_visible()
+
+    #click on Assets tab to see all orders
+    authenticated_page.get_by_test_id("side-bar-option-assets").click()
+    #click on Postition History tab to go to order history
+    authenticated_page.get_by_test_id("tab-asset-order-type-history").click()
+    authenticated_page.get_by_test_id("tab-asset-order-type-history-orders-and-deals").click()
+    
+    smallest_time_diff = timedelta.max
+    correctRow = None
+    #wait for 2 seconds to ensure data loaded
+    authenticated_page.wait_for_timeout(2000)
+    #retrieve the latest pending position
+    latestRow = authenticated_page.get_by_test_id("asset-history-position-list-item").all()
+    for row in latestRow:
+        row_dt_str = row.get_by_test_id("asset-history-column-open-date").text_content()
+        row_dt = datetime.strptime(row_dt_str, "%Y-%m-%d %H:%M:%S")
+        time_diff = abs(serverTime_dt - row_dt)
+        if time_diff < smallest_time_diff:
+            smallest_time_diff = time_diff
+            correctRow = row
+    orderNo = correctRow.get_by_test_id("asset-history-column-order-id").text_content()
+    correctRow.get_by_test_id("asset-history-position-list-item-expand").click()
