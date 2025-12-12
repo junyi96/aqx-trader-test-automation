@@ -87,3 +87,4 @@ The validate Order History Data is currently used in `test_demo_validateOrderHis
 Refactoring will need to be done to separate the test cases into seprate files based on function such as the Order Creation and Order Edit.
 2. The test trace is 1 per whole test script which makes debugging exponentially harder. 
 The test script has to be modified to generate test trace per test case for better debugging.
+3. Most of the test case use the same section of code. It may be prudent to find a way to decouple those code for better readability.
