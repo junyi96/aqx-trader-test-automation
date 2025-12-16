@@ -70,9 +70,20 @@ class TestMarketOrders:
         3. Verify take profit points field is populated
         """
         logger.info("Testing auto-calculation of SL/TP points")
-
+        #Make sure we are on trading page
+        trading_page.navigate_to_trading()
         # Set volume to trigger auto-calculation
         trading_page.set_volume(0.1)
+
+        #retrieve current price
+        current_price = trading_page.get_current_buy_price()
+
+        #prepare stoploss and takeprofit price data
+        stop_loss_price = OrderDataGenerator.calculate_stop_loss(current_price)
+        take_profit_price = OrderDataGenerator.calculate_take_profit(current_price)
+        
+        trading_page.set_stop_loss_price(stop_loss_price)
+        trading_page.set_take_profit_price(take_profit_price)
 
         # Verify auto-calculated fields are populated
         trading_page.wait_for_auto_calculated_fields()

@@ -13,6 +13,8 @@ class TestLogger:
     """Custom logger for test automation"""
 
     _loggers = {}
+    _file_handler = None  # Shared file handler across all loggers
+    _pytest_handler = None  # Shared pytest.log handler
 
     @staticmethod
     def get_logger(name: str = "test_automation") -> logging.Logger:
@@ -35,39 +37,64 @@ class TestLogger:
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
 
+        # Prevent propagation to root logger to avoid duplicates with pytest
+        logger.propagate = False
+
         # Avoid duplicate handlers
         if logger.handlers:
             return logger
 
         # Create formatters
         detailed_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
+            '%(asctime)s - %(name)s - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
 
         simple_formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s',
+            '%(asctime)s - [%(levelname)s] - %(message)s',
             datefmt='%H:%M:%S'
         )
 
-        # File handler (detailed logs)
-        log_file = config.LOGS_DIR / f"test_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        file_handler = logging.FileHandler(log_file, encoding='utf-8')
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(detailed_formatter)
+        # Create shared file handlers if they don't exist (one per test session)
+        if TestLogger._file_handler is None:
+            # Timestamped log file for this test run
+            log_file = config.LOGS_DIR / f"test_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            TestLogger._file_handler = logging.FileHandler(log_file, encoding='utf-8', mode='w')
+            TestLogger._file_handler.setLevel(logging.DEBUG)
+            TestLogger._file_handler.setFormatter(detailed_formatter)
 
-        # Console handler (simplified logs)
+            # Also write to main pytest.log for convenience
+            pytest_log = config.LOGS_DIR / "latest_test_run.log"
+            TestLogger._pytest_handler = logging.FileHandler(pytest_log, encoding='utf-8', mode='w')
+            TestLogger._pytest_handler.setLevel(logging.DEBUG)
+            TestLogger._pytest_handler.setFormatter(detailed_formatter)
+
+        # Console handler (per logger, but will show same info)
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(simple_formatter)
 
         # Add handlers
-        logger.addHandler(file_handler)
+        logger.addHandler(TestLogger._file_handler)
+        logger.addHandler(TestLogger._pytest_handler)
         logger.addHandler(console_handler)
 
         TestLogger._loggers[name] = logger
 
         return logger
+
+    @staticmethod
+    def reset_loggers():
+        """Reset all loggers (useful for testing or new test sessions)"""
+        for logger in TestLogger._loggers.values():
+            logger.handlers.clear()
+        TestLogger._loggers.clear()
+        if TestLogger._file_handler:
+            TestLogger._file_handler.close()
+        if TestLogger._pytest_handler:
+            TestLogger._pytest_handler.close()
+        TestLogger._file_handler = None
+        TestLogger._pytest_handler = None
 
 
 # Convenience function

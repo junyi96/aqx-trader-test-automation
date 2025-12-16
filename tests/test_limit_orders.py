@@ -21,8 +21,8 @@ class TestLimitOrders:
     @pytest.mark.parametrize("expiry_type", [
         "Good Till Canceled",
         "Good Till Day",
-        "Good Till Specified Date",
-        "Good Till Specified Date and Time"
+        "Specified Date",
+        "Specified Date and Time"
     ])
     def test_create_limit_order_with_expiry(
         self,
@@ -39,6 +39,7 @@ class TestLimitOrders:
             expiry_type: Type of order expiry to test
         """
         logger.info(f"Starting test: Create limit order with {expiry_type}")
+        trading_page.check_on_trading_page_and_navigate()
 
         # Get current price
         current_price = trading_page.get_current_buy_price()

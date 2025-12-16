@@ -6,9 +6,9 @@
     "Good Till Specified Date and Time"
   ],
   "order_types": [
-    "MARKET",
-    "LIMIT",
-    "STOP"
+    "Market",
+    "Limit",
+    "Stop"
   ],
   "default_volume": 0.1,
   "stop_loss_percentage": 5.0,
