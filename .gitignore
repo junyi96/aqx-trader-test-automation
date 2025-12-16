@@ -42,6 +42,7 @@ assets/
 
 # IDE
 .vscode/
+.vs/
 .idea/
 *.swp
 *.swo
