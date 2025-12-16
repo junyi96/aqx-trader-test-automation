@@ -1,0 +1,16 @@
+{
+  "expiry_types": [
+    "Good Till Canceled",
+    "Good Till Day",
+    "Good Till Specified Date",
+    "Good Till Specified Date and Time"
+  ],
+  "order_types": [
+    "MARKET",
+    "LIMIT",
+    "STOP"
+  ],
+  "default_volume": 0.1,
+  "stop_loss_percentage": 5.0,
+  "take_profit_percentage": 5.0
+}

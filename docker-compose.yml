@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build: .
+    container_name: aqx-test-automation
+    environment:
+      - TEST_ENV=development
+      - BROWSER=chromium
+      - HEADLESS=true
+      - AQX_USERNAME=${AQX_USERNAME}
+      - AQX_PASSWORD=${AQX_PASSWORD}
+    volumes:
+      - ./reports:/app/reports
+      - ./screenshots:/app/screenshots
+      - ./traces:/app/traces
+      - ./logs:/app/logs
+    command: pytest -v --html=reports/report.html --self-contained-html
+
+  test-runner-parallel:
+    build: .
+    container_name: aqx-test-parallel
+    environment:
+      - TEST_ENV=development
+      - BROWSER=chromium
+      - HEADLESS=true
+      - AQX_USERNAME=${AQX_USERNAME}
+      - AQX_PASSWORD=${AQX_PASSWORD}
+    volumes:
+      - ./reports:/app/reports
+      - ./screenshots:/app/screenshots
+      - ./traces:/app/traces
+      - ./logs:/app/logs
+    command: pytest -v -n auto --html=reports/parallel-report.html --self-contained-html
