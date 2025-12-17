@@ -105,15 +105,15 @@ class TestLimitOrders:
         trading_page: TradingPage,
         assets_page: AssetsPage
     ):
-        """Test creating a limit order with Good Till Specified Date expiry"""
-        logger.info("Testing Limit Order - Good Till Specified Date")
+        """Test creating a limit order with Specified Date expiry"""
+        logger.info("Testing Limit Order - Specified Date")
 
         current_price = trading_page.get_current_buy_price()
         future_date = OrderDataGenerator.generate_future_date(days_ahead=7)
 
         order_data = OrderDataGenerator.generate_limit_order_data(
             current_price,
-            expiry_type="Good Till Specified Date"
+            expiry_type="Specified Date"
         )
         order_data["expiry_date"] = future_date
 
@@ -125,15 +125,15 @@ class TestLimitOrders:
         trading_page: TradingPage,
         assets_page: AssetsPage
     ):
-        """Test creating a limit order with Good Till Specified Date and Time expiry"""
-        logger.info("Testing Limit Order - Good Till Specified Date and Time")
+        """Test creating a limit order with Specified Date and Time expiry"""
+        logger.info("Testing Limit Order - Specified Date and Time")
 
         current_price = trading_page.get_current_buy_price()
         future_datetime = OrderDataGenerator.generate_future_date(days_ahead=7)
 
         order_data = OrderDataGenerator.generate_limit_order_data(
             current_price,
-            expiry_type="Good Till Specified Date and Time"
+            expiry_type="Specified Date and Time"
         )
         order_data["expiry_date"] = future_datetime
 

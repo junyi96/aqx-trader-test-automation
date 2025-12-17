@@ -20,8 +20,8 @@ class TestStopOrders:
     @pytest.mark.parametrize("expiry_type", [
         "Good Till Canceled",
         "Good Till Day",
-        "Good Till Specified Date",
-        "Good Till Specified Date and Time"
+        "Specified Date",
+        "Specified Date and Time"
     ])
     def test_create_stop_order_with_expiry(
         self,
@@ -98,15 +98,15 @@ class TestStopOrders:
         self,
         trading_page: TradingPage
     ):
-        """Test creating a stop order with Good Till Specified Date expiry"""
-        logger.info("Testing Stop Order - Good Till Specified Date")
+        """Test creating a stop order with Specified Date expiry"""
+        logger.info("Testing Stop Order - Specified Date")
 
         current_price = trading_page.get_current_buy_price()
         future_date = OrderDataGenerator.generate_future_date(days_ahead=7)
 
         order_data = OrderDataGenerator.generate_stop_order_data(
             current_price,
-            expiry_type="Good Till Specified Date"
+            expiry_type="Specified Date"
         )
         order_data["expiry_date"] = future_date
 
@@ -117,15 +117,15 @@ class TestStopOrders:
         self,
         trading_page: TradingPage
     ):
-        """Test creating a stop order with Good Till Specified Date and Time expiry"""
-        logger.info("Testing Stop Order - Good Till Specified Date and Time")
+        """Test creating a stop order with Specified Date and Time expiry"""
+        logger.info("Testing Stop Order - Specified Date and Time")
 
         current_price = trading_page.get_current_buy_price()
         future_datetime = OrderDataGenerator.generate_future_date(days_ahead=7)
 
         order_data = OrderDataGenerator.generate_stop_order_data(
             current_price,
-            expiry_type="Good Till Specified Date and Time"
+            expiry_type="Specified Date and Time"
         )
         order_data["expiry_date"] = future_datetime
 

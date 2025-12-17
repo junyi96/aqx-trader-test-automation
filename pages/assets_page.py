@@ -27,6 +27,7 @@ class AssetsPage(BasePage):
 
     # Position columns
     ORDER_ID_COLUMN = "asset-open-column-order-id"
+    ORDER_DATETIME_COLUMN = "asset-open-column-open-date"
     HISTORY_ORDER_ID_COLUMN = "asset-history-column-order-id"
     HISTORY_OPEN_DATE_COLUMN = "asset-history-column-open-date"
 
@@ -104,6 +105,25 @@ class AssetsPage(BasePage):
             if order_id in pos_id:
                 return position
         return None
+    
+    def find_position_by_order_date(self, order_date: datetime) -> Optional[Locator]:
+        """
+        Find an open position by order ID
+
+        Args:
+            order_id: The order ID to search for
+
+        Returns:
+            Locator for the matching position, or None if not found
+        """
+        # e.g. 2025-12-17 08:47:10
+        date_check = order_date.strftime("%Y-%m-%d %H:%M:%S")
+        positions = self.get_all_open_positions()
+        for position in positions:
+            pos_date = position.get_by_test_id(self.ORDER_DATETIME_COLUMN).text_content()
+            if date_check in pos_date:
+                return position
+        return None
 
     def verify_position_exists(self, order_id: str) -> bool:
         """Verify that a position with given order ID exists"""
@@ -122,14 +142,15 @@ class AssetsPage(BasePage):
         position.get_by_test_id(self.EDIT_BUTTON).click()
 
         # Wait for edit dialog to appear
-        expect(self.get_by_text("Edit Order")).to_be_visible(timeout=10000)
+        expect(self.get_by_text("Edit Position")).to_be_visible(timeout=10000)
 
     def close_position(
         self,
         position: Locator = None,
         volume: float = None,
         use_max: bool = False,
-        verify_success: bool = True
+        verify_success: bool = True,
+        order_datetime: datetime = datetime.now()
     ):
         """
         Close a position (full or partial)
@@ -189,12 +210,12 @@ class AssetsPage(BasePage):
 
         # Get order number
         overlay = self.page.locator(self.OVERLAY_DIALOG)
-        order_number_element = overlay.locator('div:has(div:text("Order No.")) + div').first
+        order_number_element = overlay.locator('div:text("Order No.") + div')
         order_number = order_number_element.text_content()
 
         # Get current volume and calculate partial
         current_volume = float(self.page.locator(self.VOLUME_INPUT).input_value())
-        partial_volume = round(current_volume * volume_fraction, 5)
+        partial_volume = round(current_volume * volume_fraction, 2)
 
         # Fill partial volume
         self.page.locator(self.VOLUME_INPUT).fill(str(partial_volume))

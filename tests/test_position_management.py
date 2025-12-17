@@ -76,6 +76,8 @@ class TestPositionManagement:
         assets_page.navigate_to_assets()
         assets_page.switch_to_open_positions()
 
+        # Get the order ID
+
         # Partial close
         order_id, closed_volume = assets_page.partial_close_position(volume_fraction=0.5)
         logger.info(f"Partially closed order {order_id}, closed volume: {closed_volume}")

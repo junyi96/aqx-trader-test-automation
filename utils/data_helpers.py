@@ -105,6 +105,7 @@ class OrderDataGenerator:
             "volume": 0.1,
             "stop_loss": OrderDataGenerator.calculate_stop_loss(current_price),
             "take_profit": OrderDataGenerator.calculate_take_profit(current_price),
+            "order_datetime": datetime.now()
         }
 
     @staticmethod
@@ -127,6 +128,7 @@ class OrderDataGenerator:
             "expiry_type": expiry_type,
             "stop_loss": OrderDataGenerator.calculate_stop_loss(limit_price),
             "take_profit": OrderDataGenerator.calculate_take_profit(limit_price),
+            "order_datetime": datetime.now()
         }
 
         # Add expiry date for date-based expiry types

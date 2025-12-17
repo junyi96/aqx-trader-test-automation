@@ -35,9 +35,9 @@ class TradingPage(BasePage):
 
     def navigate_to_trading(self):
         """Navigate to the trading page"""
-        self.navigate_to(f"{self.config.BASE_URL}/trading")
+        self.navigate_to(f"{self.config.BASE_URL}/web/trade")
 
-    def verify_on_trading_page(self, timeout: int = 10000) -> bool:
+    def verify_on_trading_page(self, timeout: int = 5000) -> bool:
         """Verify that we are on the trading page by checking for key elements
         Returns:
         bool: True if on trading page, False otherwise
@@ -60,17 +60,18 @@ class TradingPage(BasePage):
         if not self.verify_on_trading_page(timeout=timeout):
             self.navigate_to_trading()
             # Verify we successfully navigated
-            self.verify_on_trading_page(timeout=10000)
+            self.verify_on_trading_page(timeout=timeout)
 
-    def get_current_buy_price(self, timeout: int = 10000) -> float:
+    def get_current_buy_price(self, timeout: int = 5000) -> float:
         self.check_on_trading_page_and_navigate()
 
         """Get current buy price"""
         price_element = self.get_by_test_id(self.BUY_PRICE)
 
         # Wait for price to load (not show placeholder "--")
-        expect(price_element).not_to_be_empty(timeout=timeout)
         expect(price_element).not_to_have_text("--", timeout=timeout)
+        # Wait for price to be a number (with optional decimals)
+        expect(price_element).to_have_text(re.compile(r'^\d+\.?\d*$'), timeout=timeout)
 
         price_text = price_element.text_content()
         # Extract numeric value from price
@@ -109,11 +110,13 @@ class TradingPage(BasePage):
         """Set stop loss price"""
         self.check_on_trading_page_and_navigate()
         self.get_by_test_id(self.STOP_LOSS_PRICE).fill(str(price))
+        self.get_by_test_id(self.STOP_LOSS_POINTS).click()  # Trigger any onchange events
 
     def set_take_profit_price(self, price: float):
         """Set take profit price"""
         self.check_on_trading_page_and_navigate()
         self.get_by_test_id(self.TAKE_PROFIT_PRICE).fill(str(price))
+        self.get_by_test_id(self.TAKE_PROFIT_POINTS).click()  # Trigger any onchange events
 
     def get_stop_loss_price(self) -> float:
         """Get current stop loss price"""
@@ -216,7 +219,8 @@ class TradingPage(BasePage):
         stop_loss: float = None,
         take_profit: float = None,
         order_side: str = "BUY",
-        verify_success: bool = True
+        verify_success: bool = True,
+        order_datetime: datetime = datetime.now()
     ):
         """
         Complete flow to place a market order
@@ -229,6 +233,9 @@ class TradingPage(BasePage):
             verify_success: Whether to verify success message
         """
         self.check_on_trading_page_and_navigate()
+
+        #Make sure it is market order
+        self.select_order_type("Market")
 
         # Set volume
         self.set_volume(volume)
@@ -262,7 +269,8 @@ class TradingPage(BasePage):
         take_profit: float = None,
         expiry_date: datetime = None,
         order_side: str = "BUY",
-        verify_success: bool = True
+        verify_success: bool = True,
+        order_datetime: datetime = datetime.now()
     ):
         """
         Complete flow to place a limit order
@@ -379,16 +387,36 @@ class TradingPage(BasePage):
             expiry_date: The date to set
             include_time: Whether to also set time
         """
-        self.check_on_trading_page_and_navigate()
-        
+        #self.check_on_trading_page_and_navigate()
+
         # Click on date input to open calendar
         self.get_by_test_id("trade-input-expiry-date").click()
 
         # Click on the date (using aria-label)
-        day_str = expiry_date.strftime("%Y-%m-%d")
-        self.page.locator(f'div[aria-label="{day_str}"]').click()
+        # example: aria-label="December 24, 2025"
+        day_str = expiry_date.strftime("%B %d, %Y")
+        self.page.locator(f'abbr[aria-label="{day_str}"]').click()
 
         # If time is needed, set it
         if include_time:
-            time_str = expiry_date.strftime("%H:%M")
-            self.get_by_test_id("trade-input-expiry-time").fill(time_str)
+            time_hr_str = expiry_date.strftime("%H")
+            time_min_str = expiry_date.strftime("%M")
+
+            # click on time dropdown to open
+            self.get_by_test_id("trade-input-expiry-time").click()
+            self.wait_for_timeout(3000)  # Wait for picker to render
+            
+
+            #click on hour to set
+            self.page.locator('div:has-text("Hour") + div').first.click()
+            # Wait for the dropdown options to appear
+            self.page.wait_for_selector('div[data-testid="options"]', timeout=5000)
+            self.page.locator(f'[data-testid="options"] div:has-text("{time_hr_str}")').first.click()
+            
+            #click on minute to set
+            self.page.locator('div:has-text("Minute") + div').first.click()
+            # Wait for the dropdown options to appear
+            self.page.wait_for_selector('div[data-testid="options"]', timeout=5000)
+            self.page.locator(f'[data-testid="options"] div:has-text("{time_min_str}")').first.click()
+            # click OK to confirm time
+            self.page.get_by_role("button", name="OK").click()

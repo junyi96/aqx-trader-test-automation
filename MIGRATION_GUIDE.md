@@ -127,8 +127,8 @@ def test_create_market_order(trading_page: TradingPage):
 @pytest.mark.parametrize("expiry_type", [
     "Good Till Canceled",
     "Good Till Day",
-    "Good Till Specified Date",
-    "Good Till Specified Date and Time"
+    "Specified Date",
+    "Specified Date and Time"
 ])
 def test_create_limit_order_with_expiry(trading_page, expiry_type):
     # One test, runs 4 times with different data
