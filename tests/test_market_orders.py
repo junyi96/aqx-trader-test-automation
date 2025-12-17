@@ -85,8 +85,6 @@ class TestMarketOrders:
         trading_page.set_stop_loss_price(stop_loss_price)
         trading_page.set_take_profit_price(take_profit_price)
 
-        trading_page.
-
         # Verify auto-calculated fields are populated
         trading_page.wait_for_auto_calculated_fields()
 
