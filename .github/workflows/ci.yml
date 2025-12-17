@@ -49,8 +49,9 @@ jobs:
         HEADLESS: true
         AQX_USERNAME: ${{ secrets.AQX_USERNAME }}
         AQX_PASSWORD: ${{ secrets.AQX_PASSWORD }}
+        PWDEBUG: 0
       run: |
-        pytest -m smoke --html=reports/smoke-report.html --self-contained-html
+        pytest -m smoke --html=reports/smoke-report.html --self-contained-html --verbose --tb=short
 
     - name: Run regression tests
       if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
@@ -59,8 +60,9 @@ jobs:
         HEADLESS: true
         AQX_USERNAME: ${{ secrets.AQX_USERNAME }}
         AQX_PASSWORD: ${{ secrets.AQX_PASSWORD }}
+        PWDEBUG: 0
       run: |
-        pytest -m regression --html=reports/regression-report.html --self-contained-html
+        pytest -m regression --html=reports/regression-report.html --self-contained-html --verbose --tb=short
 
     - name: Upload test reports
       if: always()
